@@ -32,14 +32,14 @@ import clientPromise from '@/lib/mongodb';
  *       500:
  *         description: Erreur interne du serveur
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { idMovie: string; idComment: string } }
-): Promise<NextResponse> {
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const idMovie = url.pathname.split('/')[3];  // idMovie dans l'URL
+  const idComment = url.pathname.split('/')[5];  // idComment dans l'URL
+
   try {
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
-    const { idMovie, idComment } = params;
 
     if (!ObjectId.isValid(idMovie) || !ObjectId.isValid(idComment)) {
       return NextResponse.json({ status: 400, message: 'Invalid ID' });
@@ -62,6 +62,7 @@ export async function GET(
     });
   }
 }
+
 
 /**
  * @swagger
