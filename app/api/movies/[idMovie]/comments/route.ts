@@ -4,9 +4,9 @@ import clientPromise from '@/lib/mongodb';
 
 /**
  * @swagger
- * /api/movies/{idMovie}:
+ * /api/movies/{idMovie}/comments:
  *   get:
- *     summary: Récupérer un film par son ID
+ *     summary: Récupérer les commentaires d'un film
  *     tags:
  *       - Movies
  *     parameters:
@@ -15,14 +15,12 @@ import clientPromise from '@/lib/mongodb';
  *         required: true
  *         schema:
  *           type: string
- *         description: L'ID du film à récupérer
+ *         description: L'ID du film dont on veut récupérer les commentaires
  *     responses:
  *       200:
- *         description: Film récupéré avec succès
+ *         description: Liste des commentaires récupérée avec succès
  *       400:
  *         description: ID de film invalide
- *       404:
- *         description: Film non trouvé
  *       500:
  *         description: Erreur interne du serveur
  */
@@ -39,15 +37,12 @@ export async function GET(
       return NextResponse.json({ status: 400, message: 'Invalid movie ID' });
     }
 
-    const movie = await db
-      .collection('movies')
-      .findOne({ _id: new ObjectId(idMovie) });
+    const comments = await db
+      .collection('comments')
+      .find({ movie_id: new ObjectId(idMovie) })
+      .toArray();
 
-    if (!movie) {
-      return NextResponse.json({ status: 404, message: 'Movie not found' });
-    }
-
-    return NextResponse.json({ status: 200, data: movie });
+    return NextResponse.json({ status: 200, data: comments });
   } catch (error: any) {
     return NextResponse.json({
       status: 500,
@@ -59,9 +54,9 @@ export async function GET(
 
 /**
  * @swagger
- * /api/movies/{idMovie}:
+ * /api/movies/{idMovie}/comments:
  *   post:
- *     summary: Ajouter un nouveau film
+ *     summary: Ajouter un commentaire à un film
  *     tags:
  *       - Movies
  *     parameters:
@@ -70,10 +65,21 @@ export async function GET(
  *         required: true
  *         schema:
  *           type: string
- *         description: L'ID du film à ajouter
+ *         description: L'ID du film auquel ajouter un commentaire
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               text:
+ *                 type: string
  *     responses:
  *       201:
- *         description: Film créé avec succès
+ *         description: Commentaire ajouté avec succès
  *       500:
  *         description: Erreur interne du serveur
  */
@@ -85,18 +91,17 @@ export async function POST(
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
     const { idMovie } = params;
-    const movieData = await request.json();
+    const commentData = await request.json();
 
-    // Insérez le nouveau film avec l'ID spécifié
-    const result = await db
-      .collection('movies')
-      .insertOne({ ...movieData, _id: new ObjectId(idMovie) });
+    const newComment = {
+      ...commentData,
+      movie_id: new ObjectId(idMovie),
+      date: new Date(),
+    };
 
-    return NextResponse.json({
-      status: 201,
-      message: 'Movie created',
-      data: result,
-    });
+    const result = await db.collection('comments').insertOne(newComment);
+
+    return NextResponse.json({ status: 201, message: 'Comment added', data: result });
   } catch (error: any) {
     return NextResponse.json({
       status: 500,
@@ -108,46 +113,48 @@ export async function POST(
 
 /**
  * @swagger
- * /api/movies/{idMovie}:
+ * /api/movies/{idMovie}/comments/{idComment}:
  *   put:
- *     summary: Mettre à jour un film
+ *     summary: Modifier un commentaire
  *     tags:
  *       - Movies
  *     parameters:
  *       - in: path
- *         name: idMovie
+ *         name: idComment
  *         required: true
  *         schema:
  *           type: string
- *         description: L'ID du film à mettre à jour
+ *         description: L'ID du commentaire à modifier
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               text:
+ *                 type: string
  *     responses:
  *       200:
- *         description: Film mis à jour avec succès
- *       400:
- *         description: ID de film invalide
+ *         description: Commentaire mis à jour avec succès
  *       500:
  *         description: Erreur interne du serveur
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { idMovie: string } }
+  { params }: { params: { idComment: string } }
 ): Promise<NextResponse> {
   try {
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
-    const { idMovie } = params;
-    const movieData = await request.json();
+    const { idComment } = params;
+    const updateData = await request.json();
 
-    if (!ObjectId.isValid(idMovie)) {
-      return NextResponse.json({ status: 400, message: 'Invalid movie ID' });
-    }
+    const result = await db
+      .collection('comments')
+      .updateOne({ _id: new ObjectId(idComment) }, { $set: updateData });
 
-    await db.collection('movies').updateOne(
-      { _id: new ObjectId(idMovie) },
-      { $set: movieData }
-    );
-
-    return NextResponse.json({ status: 200, message: 'Movie updated' });
+    return NextResponse.json({ status: 200, message: 'Comment updated', data: result });
   } catch (error: any) {
     return NextResponse.json({
       status: 500,
@@ -159,42 +166,36 @@ export async function PUT(
 
 /**
  * @swagger
- * /api/movies/{idMovie}:
+ * /api/movies/{idMovie}/comments/{idComment}:
  *   delete:
- *     summary: Supprimer un film
+ *     summary: Supprimer un commentaire
  *     tags:
  *       - Movies
  *     parameters:
  *       - in: path
- *         name: idMovie
+ *         name: idComment
  *         required: true
  *         schema:
  *           type: string
- *         description: L'ID du film à supprimer
+ *         description: L'ID du commentaire à supprimer
  *     responses:
  *       200:
- *         description: Film supprimé avec succès
- *       400:
- *         description: ID de film invalide
+ *         description: Commentaire supprimé avec succès
  *       500:
  *         description: Erreur interne du serveur
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { idMovie: string } }
+  { params }: { params: { idComment: string } }
 ): Promise<NextResponse> {
   try {
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
-    const { idMovie } = params;
+    const { idComment } = params;
 
-    if (!ObjectId.isValid(idMovie)) {
-      return NextResponse.json({ status: 400, message: 'Invalid movie ID' });
-    }
+    const result = await db.collection('comments').deleteOne({ _id: new ObjectId(idComment) });
 
-    await db.collection('movies').deleteOne({ _id: new ObjectId(idMovie) });
-
-    return NextResponse.json({ status: 200, message: 'Movie deleted' });
+    return NextResponse.json({ status: 200, message: 'Comment deleted', data: result });
   } catch (error: any) {
     return NextResponse.json({
       status: 500,
