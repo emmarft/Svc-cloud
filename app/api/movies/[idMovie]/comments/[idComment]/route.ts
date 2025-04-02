@@ -34,8 +34,8 @@ import clientPromise from '@/lib/mongodb';
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const idMovie = url.pathname.split('/')[3];  // idMovie dans l'URL
-  const idComment = url.pathname.split('/')[5];  // idComment dans l'URL
+  const idMovie = url.pathname.split('/')[3]; 
+  const idComment = url.pathname.split('/')[5];  
 
   try {
     const client: MongoClient = await clientPromise;
@@ -84,19 +84,17 @@ export async function GET(request: Request) {
  *       500:
  *         description: Erreur interne du serveur
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { idMovie: string; idComment: string } }
-): Promise<NextResponse> {
+export async function POST(req: Request, { params }: { params: { idMovie: string; idComment: string } }) {
   try {
+    const { idMovie, idComment } = params;  
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
-    const { idMovie, idComment } = params;
-    const commentData = await request.json();
 
-    if (!ObjectId.isValid(idMovie)) {
-      return NextResponse.json({ status: 400, message: 'Invalid movie ID' });
+    if (!ObjectId.isValid(idMovie) || !ObjectId.isValid(idComment)) {
+      return NextResponse.json({ status: 400, message: 'Invalid ID' });
     }
+
+    const commentData = await req.json(); 
 
     const result = await db.collection('comments').insertOne({
       ...commentData,
