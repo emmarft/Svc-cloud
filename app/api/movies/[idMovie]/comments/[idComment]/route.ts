@@ -84,17 +84,19 @@ export async function GET(request: Request) {
  *       500:
  *         description: Erreur interne du serveur
  */
-export async function POST(req: Request, { params }: { params: { idMovie: string; idComment: string } }) {
+export async function POST(
+  request: Request,
+  { params }: { params: { idMovie: string; idComment: string } }
+): Promise<NextResponse> {
   try {
-    const { idMovie, idComment } = params;  
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
+    const { idMovie, idComment } = params;
+    const commentData = await request.json();
 
-    if (!ObjectId.isValid(idMovie) || !ObjectId.isValid(idComment)) {
-      return NextResponse.json({ status: 400, message: 'Invalid ID' });
+    if (!ObjectId.isValid(idMovie)) {
+      return NextResponse.json({ status: 400, message: 'Invalid movie ID' });
     }
-
-    const commentData = await req.json(); 
 
     const result = await db.collection('comments').insertOne({
       ...commentData,
