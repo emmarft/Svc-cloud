@@ -26,12 +26,12 @@ import clientPromise from '@/lib/mongodb';
  */
 export async function GET(
   request: Request,
-  { params }: { params: { idMovie: string } }
+  { params }: { params: Promise<{ idMovie: string }> }
 ): Promise<NextResponse> {
+  const { idMovie } = await params;
   try {
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
-    const { idMovie } = params;
 
     if (!ObjectId.isValid(idMovie)) {
       return NextResponse.json({ status: 400, message: 'Invalid movie ID' });
@@ -85,12 +85,12 @@ export async function GET(
  */
 export async function POST(
   request: Request,
-  { params }: { params: { idMovie: string } }
+  { params }: { params: Promise<{ idMovie: string }> }
 ): Promise<NextResponse> {
+  const { idMovie } = await params;
   try {
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
-    const { idMovie } = params;
     const commentData = await request.json();
 
     const newComment = {
@@ -142,12 +142,12 @@ export async function POST(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { idComment: string } }
+  { params }: { params: Promise<{ idComment: string }> }
 ): Promise<NextResponse> {
+  const { idComment } = await params
   try {
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
-    const { idComment } = params;
     const updateData = await request.json();
 
     const result = await db
@@ -186,12 +186,12 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { idComment: string } }
+  { params }: { params: Promise<{ idComment: string }> }
 ): Promise<NextResponse> {
+  const { idComment } = await params;
   try {
     const client: MongoClient = await clientPromise;
     const db: Db = client.db('sample_mflix');
-    const { idComment } = params;
 
     const result = await db.collection('comments').deleteOne({ _id: new ObjectId(idComment) });
 

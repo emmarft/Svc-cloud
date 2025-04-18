@@ -77,11 +77,14 @@ export async function POST(request: Request): Promise<NextResponse> {
  *       500:
  *         description: Erreur interne du serveur
  */
-export async function PUT(request: Request, { params }: { params: { idTheater: string } }): Promise<NextResponse> {
+export async function PUT(
+    request: Request, 
+    { params }: { params: Promise<{ idTheater: string }> }
+): Promise<NextResponse> {
+    const { idTheater } = await params;
     try {
         const client: MongoClient = await clientPromise;
         const db: Db = client.db('sample_mflix');
-        const { idTheater } = params;
         const body = await request.json();
 
         if (!ObjectId.isValid(idTheater)) {
@@ -116,11 +119,14 @@ export async function PUT(request: Request, { params }: { params: { idTheater: s
  *       500:
  *         description: Erreur interne du serveur
  */
-export async function DELETE(request: Request, { params }: { params: { idTheater: string } }): Promise<NextResponse> {
+export async function DELETE(
+    request: Request, 
+    { params }: { params: Promise<{ idTheater: string }> }
+): Promise<NextResponse> {
+    const { idTheater } = await params;
     try {
         const client: MongoClient = await clientPromise;
         const db: Db = client.db('sample_mflix');
-        const { idTheater } = params;
 
         if (!ObjectId.isValid(idTheater)) {
             return NextResponse.json({ status: 400, message: 'Invalid theater ID' });

@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "lint": "next lint",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
@@ -10,7 +11,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.5.0",
     "mongoose": "^8.13.1",
-    "next": "latest",
+    "next": "^15.2.4",
     "next-swagger-doc": "^0.4.1",
     "react": "^18",
     "react-dom": "^18",
